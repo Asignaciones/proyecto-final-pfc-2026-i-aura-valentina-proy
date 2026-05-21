@@ -4,29 +4,37 @@ import scala.util.Random
 
 object AsignacionAulas {
 
-  // Un curso es (id, horaInicio, horaFin, numEstudiantes).
-  // Las horas son bloques de 30 min desde las 6:00 a.m. (p. ej. ini=4 → 8:00 a.m.).
+  // =========================================================================
+  // TIPOS DE DATOS
+  // =========================================================================
+
   type Curso = (String, Int, Int, Int)
+
+
   type Cursos = Vector[Curso]
 
-  // Un aula es (id, capacidad).
+
   type Aula = (String, Int)
+
+
   type Aulas = Vector[Aula]
 
-  // Asignacion(i) = j significa que el curso i se dicta en el aula j; -1 = sin asignar.
+
   type Asignacion = Vector[Int]
 
-  // Matriz simétrica de distancias entre aulas.
+
   type Distancias = Vector[Vector[Int]]
 
-  // Pesos: (w_CH, w_CF, w_DE, w_MV).
+
   type Pesos = (Int, Int, Int, Int)
 
-  // ---------------------------------------------------------------------------
-  // Funciones de generación (ya implementadas — NO MODIFICAR)
-  // ---------------------------------------------------------------------------
+  // =========================================================================
+  // GENERACION DE ENTRADAS ALEATORIAS
+  // =========================================================================
 
-  val random = new Random()
+
+  private val random = new Random()
+
 
   def cursosAlAzar(n: Int): Cursos =
     Vector.tabulate(n) { i =>
@@ -40,67 +48,116 @@ object AsignacionAulas {
 
   def distanciasAlAzar(m: Int): Distancias = {
     val v = Vector.fill(m, m)(random.nextInt(m * 2) + 1)
-    Vector.tabulate(m, m)((i, j) =>
+    Vector.tabulate(m, m) { (i, j) =>
       if (i < j) v(i)(j)
       else if (i == j) 0
-      else v(j)(i))
+      else v(j)(i)
+    }
   }
 
-  // ---------------------------------------------------------------------------
-  // Funciones de acceso (ya implementadas — NO MODIFICAR)
-  // ---------------------------------------------------------------------------
+  // =========================================================================
+  // FUNCIONES DE EXPLORACION
+  // =========================================================================
 
-  def idCurso(c: Curso): String = c._1
-  def iniCurso(c: Curso): Int   = c._2
-  def finCurso(c: Curso): Int   = c._3
-  def estCurso(c: Curso): Int   = c._4
+  def idCurso(c: Curso): String  = c._1
+  def iniCurso(c: Curso): Int    = c._2
+  def finCurso(c: Curso): Int    = c._3
+  def estCurso(c: Curso): Int    = c._4
 
-  def idAula(a: Aula): String   = a._1
-  def capAula(a: Aula): Int     = a._2
+  def idAula(a: Aula): String = a._1
+  def capAula(a: Aula): Int   = a._2
 
-  // ---------------------------------------------------------------------------
-  // Funciones a implementar
-  // ---------------------------------------------------------------------------
+  // =========================================================================
+  // 2.3 SOLAPAMIENTOS
+  // =========================================================================
 
-  /** Devuelve true sii los intervalos [ini1, fin1) y [ini2, fin2) se traslapan. */
-  def solapan(c1: Curso, c2: Curso): Boolean = ???
+  def solapan(c1: Curso, c2: Curso): Boolean =
+    iniCurso(c1) < finCurso(c2) && iniCurso(c2) < finCurso(c1)
 
-  /**
-   * Número de pares (i, j) con i < j tales que a(i) == a(j) >= 0
-   * y los cursos i y j se solapan.
-   */
-  def choques(cursos: Cursos, a: Asignacion): Int = ???
+  // =========================================================================
+  // 2.4 CHOQUES DE HORARIO
+  // =========================================================================
 
-  /** Cantidad de cursos cuya aula asignada tiene capacidad menor al número de estudiantes. */
-  def capacidadFallida(cursos: Cursos, aulas: Aulas, a: Asignacion): Int = ???
+  def choques(cursos: Cursos, a: Asignacion): Int = {
+    val n = cursos.length
+    (0 until n).toVector.flatMap { i =>
+      ((i + 1) until n).toVector.map { j =>
+        if (a(i) >= 0 && a(j) >= 0 && a(i) == a(j) && solapan(cursos(i), cursos(j))) 1
+        else 0
+      }
+    }.sum
+  }
 
-  /**
-   * Suma de (cap(aula_i) - est(curso_i)) para los cursos asignados
-   * con capacidad suficiente.
-   */
-  def desperdicio(cursos: Cursos, aulas: Aulas, a: Asignacion): Int = ???
+  // =========================================================================
+  // 2.5 CAPACIDAD FALLIDA Y DESPERDICIO
+  // =========================================================================
 
-  /**
-   * Ordena los cursos asignados por hora de inicio y suma las distancias
-   * entre aulas de cursos consecutivos.
-   */
+  def capacidadFallida(cursos: Cursos, aulas: Aulas, a: Asignacion): Int =
+    cursos.indices.count(i => a(i) >= 0 && capAula(aulas(a(i))) < estCurso(cursos(i)))
+
+
+  def desperdicio(cursos: Cursos, aulas: Aulas, a: Asignacion): Int =
+    cursos.indices
+      .filter(i => a(i) >= 0 && capAula(aulas(a(i))) >= estCurso(cursos(i)))
+      .map(i => capAula(aulas(a(i))) - estCurso(cursos(i)))
+      .sum
+
+  // =========================================================================
+  // 2.6 COSTO DE MOVILIDAD
+  // =========================================================================
+
   def movilidad(cursos: Cursos, aulas: Aulas, d: Distancias,
-                a: Asignacion): Int = ???
+                a: Asignacion): Int = {
+    val asignados = cursos.indices
+      .filter(i => a(i) >= 0)
+      .sortBy(i => iniCurso(cursos(i)))
 
-  /** Costo total: w_CH * CH + w_CF * CF + w_DE * DE + w_MV * MV. */
+    if (asignados.length < 2) 0
+    else
+      asignados
+        .sliding(2)
+        .map(par => d(a(par(0)))(a(par(1))))
+        .sum
+  }
+
+  // =========================================================================
+  // 2.7 COSTO TOTAL
+  // =========================================================================
+
   def costoAsignacion(cursos: Cursos, aulas: Aulas, d: Distancias,
-                      a: Asignacion, w: Pesos): Int = ???
+                      a: Asignacion, w: Pesos): Int = {
+    val (wCH, wCF, wDE, wMV) = w
+    wCH * choques(cursos, a) +
+      wCF * capacidadFallida(cursos, aulas, a) +
+      wDE * desperdicio(cursos, aulas, a) +
+      wMV * movilidad(cursos, aulas, d, a)
+  }
 
-  /**
-   * Genera todas las asignaciones completas posibles: vectores en {0,..,m-1}^n.
-   * El tamaño del resultado es m^n.
-   */
-  def generarAsignaciones(n: Int, m: Int): Vector[Asignacion] = ???
+  // =========================================================================
+  // 2.8 GENERACION DE ASIGNACIONES
+  // =========================================================================
 
-  /**
-   * Devuelve la asignación de mínimo costo y su costo.
-   * Usa generarAsignaciones para explorar el espacio.
-   */
+  def generarAsignaciones(n: Int, m: Int): Vector[Asignacion] = {
+    if (n == 0)
+      Vector(Vector.empty[Int])
+    else {
+      val sufijos = generarAsignaciones(n - 1, m)
+      (0 until m).toVector.flatMap { j =>
+        sufijos.map(sufijo => j +: sufijo)
+      }
+    }
+  }
+
+  // =========================================================================
+  // 2.9 ASIGNACION OPTIMA
+  // =========================================================================
+
   def asignacionOptima(cursos: Cursos, aulas: Aulas, d: Distancias,
-                       w: Pesos): (Asignacion, Int) = ???
+                       w: Pesos): (Asignacion, Int) = {
+    val n = cursos.length
+    val m = aulas.length
+    generarAsignaciones(n, m)
+      .map(a => (a, costoAsignacion(cursos, aulas, d, a, w)))
+      .minBy(_._2)
+  }
 }
