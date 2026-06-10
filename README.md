@@ -1,91 +1,31 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/XgbWPkKq)
-# Proyecto Final — Asignación Óptima de Aulas
-## Fundamentos de Programación Funcional y Concurrente
+## Descripción del desarrollo
 
-**Fecha de entrega:** Miércoles, 03 de junio de 2026 a las 17:58:59
-**Sustentación:** Jueves, 04 de junio de 2026 en horario de clase
-**Docente:** Carlos Andres Delgado S — carlos.andres.delgado@correounivalle.edu.co
+El proyecto se desarrolló en Scala 2.13 implementando dos módulos principales:
+`AsignacionAulas` con las funciones secuenciales y `AsignacionAulasPar` con sus
+versiones paralelas.
+
+La solución secuencial define los tipos base (`Curso`, `Aula`, `Asignacion`,
+`Distancias`) e implementa las funciones `solapan`, `choques`, `capacidadFallida`,
+`desperdicio`, `movilidad`, `costoAsignacion`, `generarAsignaciones` y
+`asignacionOptima` usando operaciones funcionales sobre vectores inmutables
+(`flatMap`, `filter`, `map`, `minBy`, `sliding`).
+
+La solución paralela replica cada función aplicando división recursiva del espacio
+de trabajo mediante `parallel` y `task` del paquete `common`, siguiendo el patrón
+divide-y-vencerás. La función `asignacionOptimaPar` divide el espacio de candidatas
+($m^n$) en dos mitades que buscan su mínimo local en paralelo.
+
+Las mediciones empíricas con `System.nanoTime` sobre 12 núcleos lógicos
+(JVM OpenJDK 21.0.7) confirmaron que el paralelismo es rentable para instancias
+grandes — hasta +231% de aceleración en `asignacionOptimaPar` con $n=7$, $m=5$ —
+y contraproducente para instancias pequeñas, en línea con la predicción de la
+Ley de Amdahl.
 
 ---
 
 ## Integrantes del grupo
 
-| Nombre completo | Código | Correo institucional |
-|-----------------|--------|----------------------|
-| [Estudiante 1]  |        |                      |
-| [Estudiante 2]  |        |                      |
-| [Estudiante 3]  |        |                      |
-
-**Obligatorio:** editar esta tabla con los datos reales de todos los integrantes.
-Si un integrante no aparece aquí, su nota individual será 0.0.
-
----
-
-## Descripción
-
-El proyecto consiste en implementar, en Scala, una solución funcional y paralela al
-**problema de la asignación óptima de aulas**: dado un conjunto de cursos y un conjunto
-de aulas, encontrar la asignación que minimiza una función de costo que combina choques
-de horario, desperdicio de capacidad y distancia de movilidad entre aulas consecutivas.
-
-El enunciado completo está disponible en el campus virtual.
-
----
-
-## Estructura del repositorio
-
-```
-proyecto-final-2026-1/
-├── .github/workflows/      ← CI — NO EDITAR
-├── app/
-│   ├── build.gradle        ← NO EDITAR
-│   ├── scalastyle_config.xml ← NO EDITAR
-│   └── src/
-│       ├── main/scala/
-│       │   ├── proyecto/
-│       │   │   ├── App.scala
-│       │   │   ├── AsignacionAulas.scala     ← versión secuencial
-│       │   │   └── AsignacionAulasPar.scala  ← versión paralela
-│       │   └── common/
-│       │       └── package.scala             ← NO EDITAR
-│       └── test/scala/proyecto/
-│           ├── AsignacionAulasTest.scala
-│           └── AsignacionAulasParTest.scala
-├── docs/
-│   ├── Proceso.md          ← informe de proceso (completar)
-│   ├── Correccion.md       ← informe de corrección (completar)
-│   ├── Paralelizacion.md   ← informe de paralelización (completar)
-│   ├── Conclusiones.md     ← conclusiones (completar)
-│   └── GuiaMarkdown.md     ← referencia de sintaxis Markdown/LaTeX/Mermaid
-├── gradle/                 ← NO EDITAR
-├── gradlew                 ← NO EDITAR
-├── gradlew.bat             ← NO EDITAR
-├── settings.gradle         ← NO EDITAR
-└── README.md               ← EDITAR con integrantes
-```
-
----
-
-## Cómo correr el proyecto
-
-```bash
-# Compilar
-./gradlew compileScala
-
-# Ejecutar pruebas
-./gradlew test
-
-# Ver reporte de pruebas
-open app/build/reports/tests/test/index.html
-```
-
----
-
-## Reglas
-
-- No usar variables mutables, ciclos `for`/`while` ni `return`.
-- No modificar `build.gradle`, `settings.gradle`, `gradlew`, `gradlew.bat`,
-  `gradle/`, `.github/workflows/`, `scalastyle_config.xml` ni el paquete `common`.
-- Los informes van en `docs/` en formato Markdown; no se aceptan otros formatos.
-- Usar notación matemática en LaTeX dentro de los Markdown.
-- Diagramas de pila de llamadas con Mermaid (no imágenes).
+| Nombre completo              | Código    | Correo institucional                           |
+|------------------------------|-----------|------------------------------------------------|
+| Aura Maria Pelaez Luna       | 202459422 | aura.pelaez@correounivalle.edu.co              |
+| Valentina Valencia Lopez     | 202459626 | valentina.valencia.lopez@correounivalle.edu.co |
