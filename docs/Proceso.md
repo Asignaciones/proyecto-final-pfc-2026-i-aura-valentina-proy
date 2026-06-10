@@ -301,6 +301,7 @@ graph TD
 
 ### 9.5 `asignacionOptimaPar`
 
+
 Divide el vector de candidatas en dos mitades con `parallel`. Cada mitad busca su mínimo local y al final se compara cuál tiene menor costo.
 
 ```mermaid
